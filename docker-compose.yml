@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  # Python API Server
+  # api:
+  #   build:
+  #     context: ./python
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - ECOM_LLM_API_KEY=${ECOM_LLM_API_KEY:-ollama}
+  #     - ECOM_LLM_BASE_URL=${ECOM_LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+  #     - ECOM_LLM_MODEL=${ECOM_LLM_MODEL:-qwen3:4b}
+  #     - ECOM_REDIS_URL=redis://redis:6379/0
+  #     - ECOM_MILVUS_HOST=milvus
+  #     - ECOM_MILVUS_PORT=19530
+  #     # 使用本地 Ollama (host.docker.internal 访问宿主机)
+  #     - ECOM_OLLAMA_BASE_URL=http://host.docker.internal:11434
+  #     - ECOM_OLLAMA_EMBEDDING_MODEL=nomic-embed-text
+  #     - ECOM_DATABASE_URL=sqlite:///./ecommerce.db
+  #   depends_on:
+  #     - redis
+  #     - milvus
+  #   restart: unless-stopped
+
+  # Redis - Feature Store
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
+  # Milvus - Vector Database (standalone mode)
+  milvus:
+    image: docker.1ms.run/milvusdb/milvus:v2.3.3
+    command: ["milvus", "run", "standalone"]
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    environment:
+      - ETCD_USE_EMBED=true
+      - COMMON_STORAGETYPE=local
+    volumes:
+      - milvus_data:/var/lib/milvus
+    restart: unless-stopped
+
+
+volumes:
+  redis_data:
+  milvus_data:
